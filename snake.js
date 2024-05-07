@@ -7,22 +7,32 @@ const columns = canvas.width / scale;
 
 let snake;
 
+// Define the interval variable outside the setup function so it can be accessed globally
+let interval;
+
 (function setup() {
     snake = new Snake();
     fruit = new Fruit();
     fruit.pickLocation();
 
-    window.setInterval(() => {
+    // Assign the interval to a variable
+    interval = window.setInterval(() => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         fruit.draw();
         snake.update();
         snake.draw();
+        drawScore();
 
         if (snake.eat(fruit)) {
             fruit.pickLocation();
+            // Increment the score (total) inside the eat function of Snake
         }
 
-        snake.checkCollision();
+        if (snake.checkCollision()) {
+            drawEndScreen();
+            // Stop the game loop by clearing the interval
+            clearInterval(interval);
+        }
     }, 250);
 }());
 
@@ -105,23 +115,6 @@ function Snake() {
         }
     };
 
-    this.eat = function(fruit) {
-        if (this.x === fruit.x && this.y === fruit.y) {
-            this.total++;
-            return true;
-        }
-
-        return false;
-    };
-
-    this.checkCollision = function() {
-        for (let i=0; i<this.tail.length; i++) {
-            if (this.x === this.tail[i].x && this.y === this.tail[i].y) {
-                this.total = 0;
-                this.tail = [];
-            }
-        }
-    };
 }
 
 function Fruit() {
@@ -137,4 +130,39 @@ function Fruit() {
         ctx.fillStyle = "#FF0000";
         ctx.fillRect(this.x, this.y, scale, scale);
     };
+}
+
+// Modify the Snake's eat method to increment the total there
+Snake.prototype.eat = function(fruit) {
+    if (this.x === fruit.x && this.y === fruit.y) {
+        this.total++;
+        return true; // Fruit eaten
+    }
+    return false;
+};
+
+// Adjust the checkCollision method to only check for collisions
+Snake.prototype.checkCollision = function() {
+    for (let i = 0; i < this.tail.length; i++) {
+        if (this.x === this.tail[i].x && this.y === this.tail[i].y) {
+            return true; // Collision detected
+        }
+    }
+    return false;
+};
+
+function drawScore() {
+    ctx.fillStyle = "#555";
+    ctx.font = "20px Arial";
+    ctx.fillText("Score: " + snake.total, canvas.width - 120, 20);
+}
+
+function drawEndScreen() {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#000";
+    ctx.font = "40px Arial";
+    ctx.fillText("Game Over!", canvas.width / 2 - 120, canvas.height / 2);
+    ctx.font = "20px Arial";
+    ctx.fillText("Final Score: " + snake.total, canvas.width / 2 - 70, canvas.height / 2 + 40);
 }
